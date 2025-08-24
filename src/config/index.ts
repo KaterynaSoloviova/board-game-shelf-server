@@ -12,7 +12,7 @@ import cookieParser from "cookie-parser";
 //By default express won't accept POST requests unless from the same domain
 import cors from "cors";
 
-const FRONTEND_URL: string = process.env.ORIGIN || "http://localhost:3000";
+const FRONTEND_URL: string = process.env.ORIGIN || "http://localhost:5173";
 
 // Middleware configuration
 export default (app: Application): void => {
