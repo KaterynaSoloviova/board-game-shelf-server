@@ -26,6 +26,34 @@ router.get(
   }
 );
 
+// GET games/top - get top 10 games number of sessions
+router.get("/games/top", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const topGames = await prisma.game.findMany({
+      include: {
+        tags: true,
+        _count: {
+          select: {
+            sessions: true
+          }
+        }
+      },
+      orderBy: [
+        {
+          sessions: {
+            _count: 'desc'
+          }
+        }
+      ],
+      take: 10,
+    });
+    res.json(topGames);
+  } catch (err) {
+    console.log("Error getting top games from DB", err);
+    res.status(500).json({ message: "Error getting top games from DB" });
+  }
+});
+
 // GET games/:id - get game by Id
 router.get(
   "/games/:gameId/",
