@@ -6,6 +6,8 @@ import prisma from "../db";
 
 const router = express.Router();
 
+//Endpoints for Game
+
 // GET games/ - get all games
 router.get(
   "/games/",
@@ -13,8 +15,8 @@ router.get(
     try {
       const allGames = await prisma.game.findMany({
         include: {
-          tags: true
-        }
+          tags: true,
+        },
       });
       res.json(allGames);
     } catch (err) {
@@ -30,11 +32,11 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const { gameId } = req.params;
     try {
-      const game = await prisma.game.findFirst({ 
+      const game = await prisma.game.findFirst({
         where: { id: gameId },
         include: {
-          tags: true
-        }
+          tags: true,
+        },
       });
       res.json(game);
     } catch (err) {
@@ -65,37 +67,37 @@ router.put(
   async (req: Request, res: Response, next: NextFunction) => {
     const game = req.body;
     const { gameId } = req.params;
-    const { tags, ...gameDetail} = game;
+    const { tags, ...gameDetail } = game;
     try {
       let tagConnections: { connect: { id: string }[] } | undefined;
-      
+
       if (tags && tags.length > 0) {
         const tagIds: string[] = [];
-        
+
         for (const tag of tags) {
           let existingTag = await prisma.tag.findFirst({
             where: { title: tag.title },
           });
-          
+
           if (!existingTag) {
             existingTag = await prisma.tag.create({
-              data: { title: tag.title }
+              data: { title: tag.title },
             });
           }
-          
+
           tagIds.push(existingTag.id);
         }
-        
+
         tagConnections = {
-          connect: tagIds.map(id => ({ id }))
+          connect: tagIds.map((id) => ({ id })),
         };
       }
-      
+
       const updatedGame = await prisma.game.update({
         where: { id: gameId },
         data: {
           ...gameDetail,
-          tags: tagConnections
+          tags: tagConnections,
         },
       });
       res.json(updatedGame);
@@ -117,6 +119,295 @@ router.delete(
     } catch (err) {
       console.log("Error deleting game", err);
       res.status(500).json({ message: "Error deleting game" });
+    }
+  }
+);
+
+//Endpoints for Session
+
+// POST games/:gameId/sessions - create session
+router.post(
+  "/games/:gameId/sessions/",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+    const { date, notes, playerIds } = req.body;
+    try {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+      });
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+      const session = await prisma.session.create({
+        data: {
+          date: new Date(date),
+          notes,
+          game: { connect: { id: gameId } },
+          players: playerIds
+            ? { connect: playerIds.map((id: string) => ({ id })) }
+            : undefined,
+        },
+        include: { players: true, game: true },
+      });
+
+      res.status(201).json(session);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET games/:gameId/sessions - get sessions
+router.get(
+  "/games/:gameId/sessions",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+
+    try {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+      });
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+      const sessions = await prisma.session.findMany({
+        where: { gameId },
+        include: {
+          players: true,
+        },
+        orderBy: { date: "desc" },
+      });
+
+      res.status(200).json(sessions);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PUT /sessions/:sessionId - update a session
+router.put(
+  "/sessions/:sessionId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { sessionId } = req.params;
+    const { date, notes, playerIds } = req.body;
+
+    try {
+      const updatedSession = await prisma.session.update({
+        where: { id: sessionId },
+        data: {
+          date: date ? new Date(date) : undefined,
+          notes: notes ?? undefined,
+          players: playerIds
+            ? {
+                set: playerIds.map((id: string) => ({ id })),
+              }
+            : undefined,
+        },
+        include: { players: true, game: true },
+      });
+
+      res.status(200).json(updatedSession);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// DELETE /sessions/:sessionId - delete a session
+router.delete(
+  "/sessions/:sessionId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { sessionId } = req.params;
+
+    try {
+      await prisma.session.delete({
+        where: { id: sessionId },
+      });
+      res.status(204).send(); // 204 No Content
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+//Endpoints for Tag
+
+// GET /tags - get all tags
+router.get("/tags", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tags = await prisma.tag.findMany({
+      include: { games: true },
+    });
+    res.status(200).json(tags);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /tags/:tagId - delete a tag by id
+router.delete(
+  "/tags/:tagId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { tagId } = req.params;
+
+    try {
+      await prisma.tag.delete({
+        where: { id: tagId },
+      });
+      res.status(204).send();
+    } catch (err) {
+      console.log("Error deleting a session", err);
+      res.status(500).json({ message: "Error deleting a session" });
+    }
+  }
+);
+
+//Endpoints for Player
+
+// POST /players - create a new player
+router.post(
+  "/players",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    try {
+      const player = await prisma.player.create({
+        data: { name },
+      });
+      res.status(201).json(player);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /players - get all players
+router.get(
+  "/players",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const players = await prisma.player.findMany({
+        include: { sessions: true },
+      });
+      res.status(200).json(players);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PUT /players/:playerId - update a player
+router.put(
+  "/players/:playerId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { playerId } = req.params;
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    try {
+      const updatedPlayer = await prisma.player.update({
+        where: { id: playerId },
+        data: { name },
+      });
+      res.status(200).json(updatedPlayer);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// DELETE /players/:playerId - delete a player
+router.delete(
+  "/players/:playerId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { playerId } = req.params;
+
+    try {
+      await prisma.player.delete({
+        where: { id: playerId },
+      });
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+//Endpoints for File
+
+// POST /games/:gameId/files - create a new file for a game
+router.post(
+  "/games/:gameId/files",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+    const { title, link } = req.body;
+
+    if (!title || !link) {
+      return res.status(400).json({ error: "Title and link are required" });
+    }
+
+    try {
+      const game = await prisma.game.findUnique({ where: { id: gameId } });
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      const file = await prisma.file.create({
+        data: {
+          title,
+          link,
+          game: { connect: { id: gameId } },
+        },
+      });
+
+      res.status(201).json(file);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /games/:gameId/files - get all files for a game
+router.get(
+  "/games/:gameId/files",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+
+    try {
+      const files = await prisma.file.findMany({
+        where: { gameId },
+      });
+
+      res.status(200).json(files);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// DELETE /files/:fileId - delete a file by id
+router.delete(
+  "/files/:fileId",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { fileId } = req.params;
+
+    try {
+      await prisma.file.delete({
+        where: { id: fileId },
+      });
+      res.status(204).send();
+    } catch (error) {
+      next(error);
     }
   }
 );
