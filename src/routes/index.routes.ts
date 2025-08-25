@@ -27,32 +27,35 @@ router.get(
 );
 
 // GET games/top - get top 10 games number of sessions
-router.get("/games/top", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const topGames = await prisma.game.findMany({
-      include: {
-        tags: true,
-        _count: {
-          select: {
-            sessions: true
-          }
-        }
-      },
-      orderBy: [
-        {
-          sessions: {
-            _count: 'desc'
-          }
-        }
-      ],
-      take: 10,
-    });
-    res.json(topGames);
-  } catch (err) {
-    console.log("Error getting top games from DB", err);
-    res.status(500).json({ message: "Error getting top games from DB" });
+router.get(
+  "/games/top",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const topGames = await prisma.game.findMany({
+        include: {
+          tags: true,
+          _count: {
+            select: {
+              sessions: true,
+            },
+          },
+        },
+        orderBy: [
+          {
+            sessions: {
+              _count: "desc",
+            },
+          },
+        ],
+        take: 10,
+      });
+      res.json(topGames);
+    } catch (err) {
+      console.log("Error getting top games from DB", err);
+      res.status(500).json({ message: "Error getting top games from DB" });
+    }
   }
-});
+);
 
 // GET games/:id - get game by Id
 router.get(
@@ -64,6 +67,7 @@ router.get(
         where: { id: gameId },
         include: {
           tags: true,
+          wishlist: true,
         },
       });
       res.json(game);
@@ -79,8 +83,38 @@ router.post(
   "/games/",
   async (req: Request, res: Response, next: NextFunction) => {
     const game = req.body;
+    const { tags, ...gameDetail } = game;
     try {
-      const newGame = await prisma.game.create({ data: game });
+      let tagConnections: { connect: { id: string }[] } | undefined;
+
+      if (tags && tags.length > 0) {
+        const tagIds: string[] = [];
+
+        for (const tag of tags) {
+          let existingTag = await prisma.tag.findFirst({
+            where: { title: tag.title },
+          });
+
+          if (!existingTag) {
+            existingTag = await prisma.tag.create({
+              data: { title: tag.title },
+            });
+          }
+
+          tagIds.push(existingTag.id);
+        }
+
+        tagConnections = {
+          connect: tagIds.map((id) => ({ id })),
+        };
+      }
+
+      const newGame = await prisma.game.create({
+        data: {
+          ...gameDetail,
+          tags: tagConnections,
+        },
+      });
       res.status(201).json(newGame);
     } catch (err) {
       console.log("Error creating game", err);
@@ -147,6 +181,96 @@ router.delete(
     } catch (err) {
       console.log("Error deleting game", err);
       res.status(500).json({ message: "Error deleting game" });
+    }
+  }
+);
+
+// POST games/:gameId/addWishlist - add game to wishlist
+router.post(
+  "/games/:gameId/addWishlist",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+    const reason = req.body?.reason || "";
+
+    try {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+      });
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      if (game.isOwned) {
+        return res
+          .status(400)
+          .json({ error: "Cannot add owned game to wishlist" });
+      }
+
+      // Check if already in wishlist
+      const existingWishlist = await prisma.wishlist.findUnique({
+        where: { gameId },
+      });
+
+      if (existingWishlist) {
+        return res.status(400).json({ error: "Game is already in wishlist" });
+      }
+
+      const wishlist = await prisma.wishlist.create({
+        data: {
+          gameId,
+          reason,
+        },
+        include: {
+          game: true,
+        },
+      });
+
+      res.status(201).json(wishlist);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// POST games/:gameId/removeWishlist - remove game from wishlist and mark as owned
+router.post(
+  "/games/:gameId/removeWishlist",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { gameId } = req.params;
+
+    try {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: {
+          wishlist: true,
+        },
+      });
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      if (!game.wishlist) {
+        return res.status(400).json({ error: "Game is not in wishlist" });
+      }
+
+      // Remove from wishlist and mark as owned
+      await prisma.$transaction([
+        prisma.wishlist.delete({
+          where: { gameId },
+        }),
+        prisma.game.update({
+          where: { id: gameId },
+          data: { isOwned: true },
+        }),
+      ]);
+
+      res
+        .status(200)
+        .json({ message: "Game removed from wishlist and marked as owned" });
+    } catch (error) {
+      next(error);
     }
   }
 );
