@@ -1,5 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
+import { Tag } from "../generated/prisma";
 
 import prisma from "../db";
 
@@ -10,7 +11,11 @@ router.get(
   "/games/",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const allGames = await prisma.game.findMany();
+      const allGames = await prisma.game.findMany({
+        include: {
+          tags: true
+        }
+      });
       res.json(allGames);
     } catch (err) {
       console.log("Error getting all games from DB", err);
@@ -25,7 +30,12 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const { gameId } = req.params;
     try {
-      const game = await prisma.game.findFirst({ where: { id: gameId } });
+      const game = await prisma.game.findFirst({ 
+        where: { id: gameId },
+        include: {
+          tags: true
+        }
+      });
       res.json(game);
     } catch (err) {
       console.log("Error getting game by id from DB", err);
@@ -55,10 +65,38 @@ router.put(
   async (req: Request, res: Response, next: NextFunction) => {
     const game = req.body;
     const { gameId } = req.params;
+    const { tags, ...gameDetail} = game;
     try {
+      let tagConnections: { connect: { id: string }[] } | undefined;
+      
+      if (tags && tags.length > 0) {
+        const tagIds: string[] = [];
+        
+        for (const tag of tags) {
+          let existingTag = await prisma.tag.findFirst({
+            where: { title: tag.title },
+          });
+          
+          if (!existingTag) {
+            existingTag = await prisma.tag.create({
+              data: { title: tag.title }
+            });
+          }
+          
+          tagIds.push(existingTag.id);
+        }
+        
+        tagConnections = {
+          connect: tagIds.map(id => ({ id }))
+        };
+      }
+      
       const updatedGame = await prisma.game.update({
         where: { id: gameId },
-        data: game,
+        data: {
+          ...gameDetail,
+          tags: tagConnections
+        },
       });
       res.json(updatedGame);
     } catch (err) {

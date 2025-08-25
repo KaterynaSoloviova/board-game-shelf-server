@@ -17,6 +17,7 @@ datasource db {
 model Game {
   id         String    @id @default(cuid())
   title      String
+  description String?
   genre      String
   minPlayers Int
   maxPlayers Int
