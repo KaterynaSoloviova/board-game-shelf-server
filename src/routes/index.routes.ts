@@ -5,6 +5,33 @@ import prisma from "../db";
 
 const router = express.Router();
 
+// Helper function to create player connections
+async function createPlayerConnections(players: any[] | undefined) {
+  let playerConnections: { connect: { id: string }[] } | undefined;
+  if (players && players.length > 0) {
+    const playerIds: string[] = [];
+
+    for (const player of players) {
+      let existingPlayer = await prisma.player.findFirst({
+        where: { name: player.name },
+      });
+
+      if (!existingPlayer) {
+        existingPlayer = await prisma.player.create({
+          data: { name: player.name },
+        });
+      }
+
+      playerIds.push(existingPlayer.id);
+    }
+
+    playerConnections = {
+      connect: playerIds.map((id) => ({ id })),
+    };
+  }
+  return playerConnections;
+}
+
 //Endpoints for Game
 
 // GET games/ - get all games
@@ -314,7 +341,8 @@ router.post(
   "/games/:gameId/sessions/",
   async (req: Request, res: Response, next: NextFunction) => {
     const { gameId } = req.params;
-    const { date, notes, playerIds } = req.body;
+    const { date, notes, players } = req.body;
+
     try {
       const game = await prisma.game.findUnique({
         where: { id: gameId },
@@ -323,14 +351,14 @@ router.post(
       if (!game) {
         return res.status(404).json({ error: "Game not found" });
       }
+
+      const playerConnections = await createPlayerConnections(players);
       const session = await prisma.session.create({
         data: {
           date: new Date(date),
           notes,
           game: { connect: { id: gameId } },
-          players: playerIds
-            ? { connect: playerIds.map((id: string) => ({ id })) }
-            : undefined,
+          players: playerConnections,
         },
         include: { players: true, game: true },
       });
@@ -376,19 +404,16 @@ router.put(
   "/sessions/:sessionId",
   async (req: Request, res: Response, next: NextFunction) => {
     const { sessionId } = req.params;
-    const { date, notes, playerIds } = req.body;
+    const { date, notes, players } = req.body;
 
     try {
+      const playerConnections = await createPlayerConnections(players);
       const updatedSession = await prisma.session.update({
         where: { id: sessionId },
         data: {
           date: date ? new Date(date) : undefined,
           notes: notes ?? undefined,
-          players: playerIds
-            ? {
-                set: playerIds.map((id: string) => ({ id })),
-              }
-            : undefined,
+          players: playerConnections,
         },
         include: { players: true, game: true },
       });
