@@ -25,6 +25,32 @@ router.get(
     }
   }
 );
+// GET games/wishlist - get games from wishlist
+router.get("/games/wishlist", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const wishlistGames = await prisma.game.findMany({
+      include: {
+        tags: true,
+        wishlist: true,
+      },
+      where: {
+        isOwned: false,
+        wishlist: {
+          isNot: null,
+        },
+      },
+      orderBy: {
+        wishlist: {
+          createdAt: "desc",
+        },
+      },
+    });
+    res.json(wishlistGames);
+  } catch (err) {
+    console.log("Error getting wishlist games from DB", err);
+    res.status(500).json({ message: "Error getting wishlist games from DB" });
+  }
+});
 
 // GET games/top - get top 10 games number of sessions
 router.get(
@@ -232,6 +258,8 @@ router.post(
     }
   }
 );
+
+
 
 // POST games/:gameId/removeWishlist - remove game from wishlist and mark as owned
 router.post(
