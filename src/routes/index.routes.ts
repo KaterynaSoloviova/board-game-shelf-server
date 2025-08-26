@@ -156,7 +156,7 @@ router.put(
     const { gameId } = req.params;
     const { tags, ...gameDetail } = game;
     try {
-      let tagConnections: { connect: { id: string }[] } | undefined;
+      let tagConnections: { set: { id: string }[] } | undefined;
 
       if (tags && tags.length > 0) {
         const tagIds: string[] = [];
@@ -176,7 +176,12 @@ router.put(
         }
 
         tagConnections = {
-          connect: tagIds.map((id) => ({ id })),
+          set: tagIds.map((id) => ({ id })),
+        };
+      } else {
+        // If no tags provided, remove all existing tag connections
+        tagConnections = {
+          set: [],
         };
       }
 
