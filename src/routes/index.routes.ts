@@ -32,6 +32,27 @@ async function createPlayerConnections(players: any[] | undefined) {
   return playerConnections;
 }
 
+// Health check endpoint
+router.get("/health", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Test database connection by running a simple query
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      database: "connected"
+    });
+  } catch (error) {
+    console.log("Health check failed:", error);
+    res.status(503).json({ 
+      status: "unhealthy", 
+      timestamp: new Date().toISOString(),
+      database: "disconnected",
+      error: "Database connection failed"
+    });
+  }
+});
+
 //Endpoints for Game
 
 // GET games/ - get all games
