@@ -1,6 +1,5 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { Tag } from "../generated/prisma";
 
 import prisma from "../db";
 
