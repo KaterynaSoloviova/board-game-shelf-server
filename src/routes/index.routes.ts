@@ -74,8 +74,14 @@ router.get(
       const allGames = await prisma.game.findMany({
         include: {
           tags: true,
+          _count: {
+            select: {
+              sessions: true,
+            },
+          },
         },
       });
+
       res.json(allGames);
     } catch (err) {
       console.log("Error getting all games from DB", err);
@@ -91,6 +97,11 @@ router.get("/games/wishlist", async (req: Request, res: Response, next: NextFunc
       include: {
         tags: true,
         wishlist: true,
+        _count: {
+          select: {
+            sessions: true,
+          },
+        },
       },
       where: {
         isOwned: false,
