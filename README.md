@@ -1,8 +1,8 @@
-# Board Game Shelf Server
+# 🎲 Board Game Shelf Server
 
 A RESTful API server for managing your board game collection, tracking game sessions, and organizing your gaming wishlist. Built with Node.js, Express, TypeScript, and PostgreSQL using Prisma ORM.
 
-## Features
+## ✨ Features
 
 - **Game Management**: Add, update, and delete board games with detailed information
 - **Session Tracking**: Record and manage gaming sessions with player information
@@ -12,7 +12,7 @@ A RESTful API server for managing your board game collection, tracking game sess
 - **File Attachments**: Link external resources to games (rulebooks, reviews, etc.)
 - **Health Monitoring**: Built-in health check endpoint for monitoring
 
-## Tech Stack
+## 🛠️ **Technologies Used**
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
@@ -21,15 +21,15 @@ A RESTful API server for managing your board game collection, tracking game sess
 - **ORM**: Prisma
 - **Package Manager**: npm
 
-## Installation & Setup
+## 🚀 Installation & Setup
 
-### Prerequisites
+#### Prerequisites
 
 - Node.js (v16 or higher)
 - PostgreSQL database
 - npm or yarn
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
    ```bash
@@ -45,7 +45,7 @@ A RESTful API server for managing your board game collection, tracking game sess
 3. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/board_game_shelf"
+   DATABASE_URL="postgresql://postgres:password@localhost:5432/board_game_db?schema=public"
    TOKEN_SECRET=SomethingSecret1234
    PORT=3000
    ```
@@ -69,12 +69,12 @@ A RESTful API server for managing your board game collection, tracking game sess
    ```
    The server will start on `http://localhost:3000` (or the PORT specified in your .env file).
 
-## API Endpoints
+## 🔀 API Endpoints
 
-### Health Check
+#### Health Check
 - `GET /health` - Check server and database health
 
-### Games
+#### Games
 - `GET /games/` - Get all games
 - `GET /games/:gameId` - Get game by ID
 - `POST /games/` - Create a new game
@@ -85,60 +85,60 @@ A RESTful API server for managing your board game collection, tracking game sess
 - `POST /games/:gameId/addWishlist` - Add game to wishlist
 - `POST /games/:gameId/removeWishlist` - Remove from wishlist and mark as owned
 
-### Sessions
+#### Sessions
 - `POST /games/:gameId/sessions/` - Create a new session
 - `GET /games/:gameId/sessions` - Get all sessions for a game
 - `PUT /sessions/:sessionId` - Update a session
 - `DELETE /sessions/:sessionId` - Delete a session
 
-### Players
+#### Players
 - `GET /players` - Get all players
 - `POST /players` - Create a new player
 - `PUT /players/:playerId` - Update a player
 - `DELETE /players/:playerId` - Delete a player
 
-### Tags
+#### Tags
 - `GET /tags` - Get all tags
 - `DELETE /tags/:tagId` - Delete a tag
 
-### Files
+#### Files
 - `GET /games/:gameId/files` - Get all files for a game
 - `POST /games/:gameId/files` - Create a new file attachment
 - `DELETE /files/:fileId` - Delete a file
 
-## Data Models
+## 🛢️ Data Models
 
-### Game
+#### Game
 - Basic info: title, description, genre, publisher, age rating
 - Player count: minPlayers, maxPlayers
 - Gameplay: playTime (minutes), rating, myRating
 - Status: isOwned, coverImage
 - Relationships: tags, sessions, wishlist, files
 
-### Session
+#### Session
 - Date and notes
 - Associated game and players
 - Timestamps
 
-### Player
+#### Player
 - Name (unique)
 - Associated sessions
 
-### Tag
+#### Tag
 - Title (unique)
 - Associated games
 
-### File
+#### File
 - Title and link
 - Associated game
 
-### Wishlist
+#### Wishlist
 - Reason for wanting the game
 - Associated game
 
 ## Usage Examples
 
-### Creating a New Game
+#### Creating a New Game
 ```bash
 curl -X POST http://localhost:3000/games/ \
   -H "Content-Type: application/json" \
@@ -158,7 +158,7 @@ curl -X POST http://localhost:3000/games/ \
   }'
 ```
 
-### Adding a Session
+#### Adding a Session
 ```bash
 curl -X POST http://localhost:3000/games/gameId123/sessions/ \
   -H "Content-Type: application/json" \
@@ -169,7 +169,7 @@ curl -X POST http://localhost:3000/games/gameId123/sessions/ \
   }'
 ```
 
-### Adding to Wishlist
+#### Adding to Wishlist
 ```bash
 curl -X POST http://localhost:3000/games/gameId456/addWishlist \
   -H "Content-Type: application/json" \
@@ -178,9 +178,9 @@ curl -X POST http://localhost:3000/games/gameId456/addWishlist \
   }'
 ```
 
-## Development
+## 🛠️ Development
 
-### Project Structure
+#### **Project Structure**
 ```
 board-game-shelf-server/
 ├── prisma/                 # Database schema and migrations
@@ -196,7 +196,7 @@ board-game-shelf-server/
 └── tsconfig.json
 ```
 
-### Available Scripts
+#### Available Scripts
 - `npm run dev` - Start development server with hot reload
 - `npm start` - Start production server
 - `npm run build` - Build TypeScript to JavaScript
@@ -204,37 +204,33 @@ board-game-shelf-server/
 - `npx prisma migrate dev` - Create and apply new migration
 - `npx prisma generate` - Generate Prisma client
 
-### Database Migrations
+#### Database Migrations
 When you make changes to the Prisma schema:
 ```bash
 npx prisma migrate dev --name description_of_changes
 npx prisma generate
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-
-## Demo
+## 🪧 Demo
 
 - **Backend API**: [Board Games Shelf on Render](https://board-game-shelf-server.onrender.com)
 - **Frontend Application**: [Deployed on Netlify](https://boardgamesshelf.netlify.app/)
 - Monitoring: [UptimeRobot](https://dashboard.uptimerobot.com/monitors/801245467)
 - DB: [Supabase](https://supabase.com/dashboard/project/sfxtuxjwotybxffhwqbi)
 
-## Support
+## ℹ️ Support
 
-If you encounter any issues or have questions, please open an issue on GitHub or contact Kateryna Soloviova.
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/KaterynaSoloviova/board-game-shelf-server/issues) page
+2. Create a new issue with detailed description
+3. Contact the development team
 
 ---
 
-**Note**: This is the Backend API repository. The frontend React application can be found [here](https://github.com/KaterynaSoloviova/board-game-shelf-server/issues).
+**Note**: This is the Backend API repository. The frontend React application can be found [here](https://github.com/KaterynaSoloviova/board-game-shelf-client).
 
 ---
 
+**Happy Gaming! 🎲✨**
 **Made with ❤️ by Kateryna Soloviova**
