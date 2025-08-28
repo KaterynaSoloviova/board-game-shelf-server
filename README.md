@@ -21,17 +21,19 @@ A RESTful API server for managing your board game collection, tracking game sess
 - **ORM**: Prisma
 - **Package Manager**: npm
 
-## Prerequisites
+## Installation & Setup
+
+### Prerequisites
 
 - Node.js (v16 or higher)
 - PostgreSQL database
 - npm or yarn
 
-## Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone git@github.com:KaterynaSoloviova/board-game-shelf-server.git
    cd board-game-shelf-server
    ```
 
@@ -44,6 +46,7 @@ A RESTful API server for managing your board game collection, tracking game sess
    Create a `.env` file in the root directory:
    ```env
    DATABASE_URL="postgresql://username:password@localhost:5432/board_game_shelf"
+   TOKEN_SECRET=SomethingSecret1234
    PORT=3000
    ```
 
@@ -64,6 +67,7 @@ A RESTful API server for managing your board game collection, tracking game sess
    # Production mode
    npm start
    ```
+   The server will start on `http://localhost:3000` (or the PORT specified in your .env file).
 
 ## API Endpoints
 
@@ -215,10 +219,22 @@ npx prisma generate
 4. Add tests if applicable
 5. Submit a pull request
 
-## License
 
-[Add your license here]
+## Demo
+
+- **Backend API**: [Board Games Shelf on Render](https://board-game-shelf-server.onrender.com)
+- **Frontend Application**: [Deployed on Netlify](https://boardgamesshelf.netlify.app/)
+- Monitoring: [UptimeRobot](https://dashboard.uptimerobot.com/monitors/801245467)
+- DB: [Supabase](https://supabase.com/dashboard/project/sfxtuxjwotybxffhwqbi)
 
 ## Support
 
-For questions or issues, please [open an issue](link-to-issues) on GitHub.
+If you encounter any issues or have questions, please open an issue on GitHub or contact Kateryna Soloviova.
+
+---
+
+**Note**: This is the Backend API repository. The frontend React application can be found [here](https://github.com/KaterynaSoloviova/board-game-shelf-server/issues).
+
+---
+
+**Made with ❤️ by Kateryna Soloviova**
