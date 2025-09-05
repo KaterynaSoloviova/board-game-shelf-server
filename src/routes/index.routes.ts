@@ -381,7 +381,7 @@ router.post(
   }
 );
 
-//Endpoints for Session
+// Endpoints for Session
 
 // POST games/:gameId/sessions - create session
 router.post(
